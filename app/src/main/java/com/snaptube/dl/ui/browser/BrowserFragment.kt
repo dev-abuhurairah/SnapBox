@@ -7,17 +7,23 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import com.snaptube.dl.MainActivity
+import com.snaptube.dl.R
+import com.snaptube.dl.data.FormatOption
+import com.snaptube.dl.data.VideoMetadata
 import com.snaptube.dl.databinding.FragmentBrowserBinding
 import com.snaptube.dl.engine.DownloadManager
+import com.snaptube.dl.engine.WebMediaSniffer
 import com.snaptube.dl.ui.dialogs.FormatBottomSheetDialog
-import kotlinx.coroutines.launch
+import java.util.UUID
 
 class BrowserFragment : Fragment() {
 
@@ -25,6 +31,20 @@ class BrowserFragment : Fragment() {
     private val binding get() = _binding!!
 
     private var initialUrl: String = "https://m.youtube.com"
+    private var sniffedStreamUrl: String? = null
+    private var sniffedTitle: String = "Video on Page"
+
+    private val sniffer = WebMediaSniffer { url, title ->
+        activity?.runOnUiThread {
+            sniffedStreamUrl = url
+            if (title.isNotBlank()) sniffedTitle = title
+            // Light up floating Snaptube yellow download button
+            binding.fabDownloadPage.setColorFilter(ContextCompat.getColor(requireContext(), R.color.text_on_yellow))
+            binding.fabDownloadPage.animate().scaleX(1.15f).scaleY(1.15f).setDuration(200).withEndAction {
+                binding.fabDownloadPage.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
+            }.start()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,7 +67,6 @@ class BrowserFragment : Fragment() {
 
         binding.webView.loadUrl(initialUrl)
 
-        // Browser navigation controls
         binding.btnBack.setOnClickListener {
             if (binding.webView.canGoBack()) {
                 binding.webView.goBack()
@@ -73,15 +92,39 @@ class BrowserFragment : Fragment() {
             true
         }
 
-        // Floating Yellow Snaptube Download Button
+        // Floating Yellow Snaptube Action Button
         binding.fabDownloadPage.setOnClickListener {
-            val currentUrl = binding.webView.url
-            if (currentUrl.isNullOrEmpty() || currentUrl.startsWith("chrome://")) {
-                Toast.makeText(requireContext(), "No downloadable video detected on this page", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
+            val detected = sniffedStreamUrl
+            val pageUrl = binding.webView.url.orEmpty()
 
-            extractAndShowDialog(currentUrl)
+            if (detected != null) {
+                showDownloadSheetForStream(detected, sniffedTitle, pageUrl)
+            } else if (pageUrl.isNotBlank() && (pageUrl.startsWith("http://") || pageUrl.startsWith("https://"))) {
+                // Fallback: extract page link
+                (activity as? MainActivity)?.let {
+                    Toast.makeText(requireContext(), "Extracting media from page...", Toast.LENGTH_SHORT).show()
+                    val metadata = VideoMetadata(
+                        id = UUID.randomUUID().toString(),
+                        title = binding.webView.title ?: "Web Video",
+                        uploader = "Online Stream",
+                        duration = "01:00",
+                        thumbnailUrl = "",
+                        webpageUrl = pageUrl,
+                        audioFormats = listOf(
+                            FormatOption("audio-1", "Audio (MP3)", "mp3", "~3 - 6 MB", pageUrl, true)
+                        ),
+                        videoFormats = listOf(
+                            FormatOption("video-1", "Video (MP4)", "mp4", "~10 - 25 MB", pageUrl, false)
+                        )
+                    )
+                    val dialog = FormatBottomSheetDialog(metadata) {
+                        it.navigateToDownloads()
+                    }
+                    dialog.show(parentFragmentManager, FormatBottomSheetDialog.TAG)
+                }
+            } else {
+                Toast.makeText(requireContext(), "No media stream detected on this page yet. Play the video to detect!", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -99,10 +142,13 @@ class BrowserFragment : Fragment() {
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
         settings.databaseEnabled = true
+        settings.mediaPlaybackRequiresUserGesture = false
         settings.loadsImagesAutomatically = true
         settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
+
+        binding.webView.addJavascriptInterface(sniffer, "SnapBoxBridge")
 
         binding.webView.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
@@ -119,35 +165,48 @@ class BrowserFragment : Fragment() {
                     it.webProgress.visibility = View.VISIBLE
                     it.etBrowserUrl.setText(url ?: "")
                 }
+                sniffedStreamUrl = null
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 _binding?.let {
                     it.webProgress.visibility = View.GONE
                     it.etBrowserUrl.setText(url ?: "")
+                    it.webView.evaluateJavascript(sniffer.getInjectedJs(), null)
                 }
+            }
+
+            override fun shouldInterceptRequest(
+                view: WebView?,
+                request: WebResourceRequest?
+            ): WebResourceResponse? {
+                sniffer.inspectRequest(request, binding.webView.title ?: "Web Video")
+                return super.shouldInterceptRequest(view, request)
             }
         }
     }
 
-    private fun extractAndShowDialog(url: String) {
-        Toast.makeText(requireContext(), "Analyzing video on page with yt-dlp...", Toast.LENGTH_SHORT).show()
+    private fun showDownloadSheetForStream(streamUrl: String, title: String, pageUrl: String) {
+        val isAudio = streamUrl.contains(".mp3") || streamUrl.contains(".m4a")
+        val metadata = VideoMetadata(
+            id = UUID.randomUUID().toString(),
+            title = title,
+            uploader = "Media Stream",
+            duration = "01:00",
+            thumbnailUrl = "",
+            webpageUrl = pageUrl,
+            audioFormats = listOf(
+                FormatOption("audio-1", "Audio (MP3 / M4A)", "mp3", "~3 - 6 MB", streamUrl, true)
+            ),
+            videoFormats = listOf(
+                FormatOption("video-1", "Video (MP4 Direct)", "mp4", "~10 - 35 MB", streamUrl, false)
+            )
+        )
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            val result = DownloadManager.extractMetadata(url)
-            result.onSuccess { metadata ->
-                val dialog = FormatBottomSheetDialog(metadata) {
-                    (activity as? MainActivity)?.navigateToDownloads()
-                }
-                dialog.show(parentFragmentManager, FormatBottomSheetDialog.TAG)
-            }.onFailure { error ->
-                Toast.makeText(
-                    requireContext(),
-                    "Could not extract video: ${error.localizedMessage}",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+        val dialog = FormatBottomSheetDialog(metadata) {
+            (activity as? MainActivity)?.navigateToDownloads()
         }
+        dialog.show(parentFragmentManager, FormatBottomSheetDialog.TAG)
     }
 
     override fun onDestroyView() {

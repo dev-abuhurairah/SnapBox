@@ -18,12 +18,12 @@
         android:textColor="@color/white"
         android:textSize="22sp" />
 
-    <!-- Section: Engine & Updates -->
+    <!-- Section: Engine -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:text="ENGINE &amp; UPDATES"
+        android:text="DOWNLOAD ENGINE"
         android:textColor="@color/snaptube_yellow"
         android:textSize="12sp"
         android:textStyle="bold" />
@@ -41,14 +41,9 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Check for yt-dlp update item -->
             <LinearLayout
-                android:id="@+id/btn_update_ytdlp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:padding="16dp">
@@ -62,48 +57,19 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Update yt-dlp Engine"
+                        android:text="Snaptube Stream Sniffer Engine"
                         android:textColor="@color/white"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/tv_ytdlp_version"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Keep download algorithms compatible with YouTube &amp; Instagram"
+                        android:text="Direct CDN Stream Capture &amp; OS Download Manager"
                         android:textColor="@color/text_muted"
                         android:textSize="12sp" />
                 </LinearLayout>
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_chevron_right"
-                    app:tint="#666666" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="#26262B" />
-
-            <!-- Core status -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="FFmpeg Audio/Video Merger"
-                    android:textColor="@color/white"
-                    android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -121,7 +87,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:text="STORAGE &amp; DOWNLOADS"
+        android:text="STORAGE"
         android:textColor="@color/snaptube_yellow"
         android:textSize="12sp"
         android:textStyle="bold" />
@@ -153,7 +119,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Internal Storage / Downloads / SnapDownloader"
+                android:text="Internal Storage / Downloads / SnapBox"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -185,7 +151,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="SnapBox v1.1.0"
+                android:text="SnapBox v2.0.0"
                 android:textColor="@color/white"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -194,7 +160,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Standalone yt-dlp Video &amp; Music Downloader for Android"
+                android:text="Ultra-lightweight native video &amp; music downloader"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp" />
         </LinearLayout>
