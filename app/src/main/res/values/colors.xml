@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Snaptube Core Theme Colors -->
+    <color name="snaptube_yellow">#FFC800</color>
+    <color name="snaptube_yellow_variant">#E6B400</color>
+    <color name="snaptube_yellow_light">#FFE680</color>
+    <color name="snaptube_yellow_ripple">#33FFC800</color>
+
+    <!-- Dark Backgrounds & Surfaces -->
+    <color name="bg_dark">#121212</color>
+    <color name="surface_dark">#1E1E1E</color>
+    <color name="surface_elevated">#262626</color>
+    <color name="surface_card">#1A1A1A</color>
+    <color name="divider_dark">#2E2E2E</color>
+    <color name="border_card">#333333</color>
+
+    <!-- Typography Colors -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B0B0</color>
+    <color name="text_muted">#757575</color>
+    <color name="text_on_yellow">#121212</color>
+
+    <!-- Social Platform Colors -->
+    <color name="platform_youtube">#FF0000</color>
+    <color name="platform_instagram">#E1306C</color>
+    <color name="platform_tiktok">#00F2FE</color>
+    <color name="platform_facebook">#1877F2</color>
+    <color name="platform_twitter">#1DA1F2</color>
+    <color name="platform_soundcloud">#FF5500</color>
+    <color name="platform_vimeo">#1AB7EA</color>
+    <color name="platform_reddit">#FF4500</color>
+
+    <!-- Status Colors -->
+    <color name="status_downloading">#FFC800</color>
+    <color name="status_completed">#10B981</color>
+    <color name="status_error">#EF4444</color>
+    <color name="status_paused">#F59E0B</color>
+
+    <!-- Pure colors -->
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="transparent">#00000000</color>
+</resources>

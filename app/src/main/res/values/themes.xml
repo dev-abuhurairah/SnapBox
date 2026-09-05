@@ -1,0 +1,20 @@
+﻿<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.SnapDownloader" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/snaptube_yellow</item>
+        <item name="colorPrimaryVariant">@color/snaptube_yellow_variant</item>
+        <item name="colorOnPrimary">@color/text_on_yellow</item>
+        <item name="colorSecondary">@color/snaptube_yellow</item>
+        <item name="android:statusBarColor">@color/bg_dark</item>
+        <item name="android:navigationBarColor">@color/surface_dark</item>
+        <item name="android:windowBackground">@color/bg_dark</item>
+        <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialogTheme</item>
+    </style>
+
+    <style name="CustomBottomSheetDialogTheme" parent="Theme.Material3.Dark.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/CustomBottomSheetStyle</item>
+    </style>
+
+    <style name="CustomBottomSheetStyle" parent="Widget.Material3.BottomSheet">
+        <item name="android:background">@drawable/bg_bottom_sheet</item>
+    </style>
+</resources>
