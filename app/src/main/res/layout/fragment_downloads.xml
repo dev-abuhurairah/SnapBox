@@ -1,98 +1,214 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_dark"
-    android:orientation="vertical">
+    android:fillViewport="true">
 
-    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="14dp">
+        android:paddingTop="12dp">
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:fontFamily="sans-serif-black"
-            android:text="My Files"
-            android:textColor="@color/text_primary"
-            android:textSize="22sp" />
-
-        <!-- Clear / Refresh button -->
-        <ImageButton
-            android:id="@+id/btn_refresh_downloads"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_downloads"
-            app:tint="@color/snaptube_yellow" />
-    </LinearLayout>
-
-    <!-- Tabs: Downloading vs Finished -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tab_layout"
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:background="@color/surface_dark"
-        app:tabIndicatorColor="@color/snaptube_yellow"
-        app:tabIndicatorHeight="3dp"
-        app:tabSelectedTextColor="@color/snaptube_yellow"
-        app:tabTextColor="@color/text_secondary">
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/tab_downloading" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/tab_finished" />
-    </com.google.android.material.tabs.TabLayout>
-
-    <!-- Content Area: RecyclerView or Empty State -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_downloads"
+        <!-- SECTION 1: DOWNLOADING (COUNT) -->
+        <LinearLayout
+            android:id="@+id/layout_downloading_section"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:padding="12dp" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_downloading_header"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="Downloading (0)"
+                android:textColor="@color/white"
+                android:textSize="17sp" />
+
+            <!-- Active / Failed Download Preview Card (Matching Screenshot 1) -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_active_download"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#1A1A1E"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <!-- Thumbnail Container with Play Icon -->
+                    <FrameLayout
+                        android:layout_width="54dp"
+                        android:layout_height="54dp">
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/iv_active_thumb"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="#252528"
+                            android:scaleType="centerCrop"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Small" />
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_nav_play"
+                            app:tint="#66FFFFFF" />
+                    </FrameLayout>
+
+                    <!-- Title & Status -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_active_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:textColor="@color/white"
+                            android:textSize="13sp"
+                            tools:text="Unconfirmed_download_https___www.ins..." />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tv_active_status"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:textColor="#FF4D4D"
+                                android:textSize="12sp"
+                                tools:text="Failed" />
+
+                            <TextView
+                                android:id="@+id/tv_active_percent"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="#888888"
+                                android:textSize="12sp"
+                                tools:text="0.0%" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Chevron Right Icon -->
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="#666666" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+
+        <!-- SECTION 2: DOWNLOADED HEADER WITH ICONS (Matching Screenshot 1) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
+                android:text="Downloaded"
+                android:textColor="@color/white"
+                android:textSize="17sp" />
+
+            <!-- Filter Icon -->
+            <ImageView
+                android:id="@+id/btn_filter_downloaded"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:src="@drawable/ic_filter" />
+
+            <!-- Trash Icon -->
+            <ImageView
+                android:id="@+id/btn_clear_downloaded"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:src="@drawable/ic_trash" />
+
+            <!-- Search Icon -->
+            <ImageView
+                android:id="@+id/btn_search_downloaded"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:src="@drawable/ic_nav_download"
+                app:tint="#CCCCCC" />
+        </LinearLayout>
+
+        <!-- Downloaded Media Items List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_downloaded_items"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:nestedScrollingEnabled="false"
+            tools:itemCount="5"
+            tools:listitem="@layout/item_download" />
 
         <!-- Empty State Message -->
         <LinearLayout
-            android:id="@+id/layout_empty"
+            android:id="@+id/layout_empty_downloaded"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="32dp">
+            android:paddingVertical="40dp"
+            android:visibility="gone">
 
             <ImageView
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:src="@drawable/ic_downloads"
-                app:tint="@color/divider_dark" />
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_tray_download"
+                app:tint="#333333" />
 
             <TextView
-                android:id="@+id/tv_empty_message"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/no_downloads"
-                android:textColor="@color/text_muted"
-                android:textSize="14sp" />
+                android:layout_marginTop="12dp"
+                android:text="No downloaded videos or music yet"
+                android:textColor="#666666"
+                android:textSize="13sp" />
         </LinearLayout>
-    </FrameLayout>
 
-</LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

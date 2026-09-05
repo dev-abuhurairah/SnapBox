@@ -1,439 +1,223 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_dark"
-    android:fillViewport="true">
+    android:background="@color/bg_dark">
 
+    <!-- Ambient Faded Mosaic Background (Top Half) -->
+    <ImageView
+        android:id="@+id/iv_ambient_bg"
+        android:layout_width="0dp"
+        android:layout_height="320dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/bg_home_ambient"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Top Navigation Tabs (Search, YouTube, Music, More) -->
     <LinearLayout
+        android:id="@+id/top_category_tabs"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="24dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- Search Tab (Active) -->
+        <LinearLayout
+            android:id="@+id/tab_search"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingHorizontal="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="Search"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <View
+                android:layout_width="28dp"
+                android:layout_height="2.5dp"
+                android:layout_marginTop="4dp"
+                android:background="@color/snaptube_yellow" />
+        </LinearLayout>
+
+        <!-- YouTube Tab -->
+        <TextView
+            android:id="@+id/tab_youtube"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:fontFamily="sans-serif"
+            android:padding="8dp"
+            android:text="YouTube"
+            android:textColor="@color/text_secondary"
+            android:textSize="15sp" />
+
+        <!-- Music Tab -->
+        <TextView
+            android:id="@+id/tab_music"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:fontFamily="sans-serif"
+            android:padding="8dp"
+            android:text="Music"
+            android:textColor="@color/text_secondary"
+            android:textSize="15sp" />
+
+        <!-- More Tab -->
+        <TextView
+            android:id="@+id/tab_more"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:fontFamily="sans-serif"
+            android:padding="8dp"
+            android:text="More"
+            android:textColor="@color/text_secondary"
+            android:textSize="15sp" />
+    </LinearLayout>
+
+    <!-- Center Content: Brand Logo & Pill Search Box -->
+    <LinearLayout
+        android:id="@+id/center_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingHorizontal="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/top_category_tabs"
+        app:layout_constraintVertical_bias="0.32">
 
-        <!-- Top Header: Logo & Branding -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- Bold Snaptube Brand Wordmark -->
+        <TextView
+            android:id="@+id/tv_brand_logo"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:letterSpacing="-0.02"
+            android:text="SnapBox"
+            android:textColor="@color/snaptube_yellow"
+            android:textSize="40sp" />
+
+        <!-- Snaptube Pill Search Bar -->
+        <LinearLayout
+            android:id="@+id/layout_search_pill"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="32dp"
+            android:background="@drawable/bg_search_pill"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingVertical="12dp">
+            android:paddingStart="16dp"
+            android:paddingEnd="6dp">
 
+            <!-- Download Tray Icon -->
             <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:src="@drawable/ic_download"
-                app:tint="@color/snaptube_yellow" />
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_tray_download"
+                app:tint="#888888" />
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-black"
-                android:text="SnapBox"
-                android:textColor="@color/text_primary"
-                android:textSize="22sp" />
-
-            <!-- Engine Indicator Badge -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_format_chip"
-                android:paddingHorizontal="10dp"
-                android:paddingVertical="4dp"
-                android:text="yt-dlp v2024"
-                android:textColor="@color/snaptube_yellow"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- Search & URL Input Card -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_search_bar"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="14dp"
-            android:paddingVertical="6dp">
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_search"
-                app:tint="@color/text_muted" />
-
+            <!-- Input / Search Query -->
             <EditText
-                android:id="@+id/et_url"
+                android:id="@+id/et_search_input"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="6dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
                 android:background="@null"
-                android:hint="@string/search_hint"
-                android:imeOptions="actionDone"
-                android:inputType="textUri"
+                android:hint="Search to download"
+                android:imeOptions="actionSearch"
+                android:inputType="textUri|text"
                 android:maxLines="1"
                 android:textColor="@color/text_primary"
-                android:textColorHint="@color/text_muted"
-                android:textSize="14sp" />
+                android:textColorHint="#757575"
+                android:textSize="15sp" />
 
-            <!-- Quick Paste Button -->
+            <!-- Quick Paste Chip Button inside bar -->
             <TextView
-                android:id="@+id/btn_paste"
+                android:id="@+id/btn_home_paste"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="8dp"
-                android:text="@string/btn_paste"
+                android:padding="6dp"
+                android:text="Paste"
                 android:textColor="@color/snaptube_yellow"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
+
+            <!-- Yellow Circular Search Button -->
+            <ImageButton
+                android:id="@+id/btn_search_circle"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_yellow_circle_btn"
+                android:contentDescription="Search"
+                android:src="@drawable/ic_search_btn" />
         </LinearLayout>
 
-        <!-- Big Snaptube Yellow Analyze & Download Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_analyze"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="@color/snaptube_yellow"
-            android:fontFamily="sans-serif-medium"
-            android:text="Extract &amp; Download"
-            android:textColor="@color/text_on_yellow"
-            android:textSize="15sp"
-            app:cornerRadius="26dp"
-            app:icon="@drawable/ic_download"
-            app:iconGravity="textStart"
-            app:iconTint="@color/text_on_yellow" />
-
-        <!-- Loading / Extraction Indicator -->
+        <!-- Loading Indicator Card -->
         <LinearLayout
-            android:id="@+id/layout_loading"
+            android:id="@+id/layout_extracting"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:background="@drawable/bg_card_dark"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:padding="16dp"
-            android:visibility="gone">
+            android:visibility="gone"
+            tools:visibility="visible">
 
             <ProgressBar
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:indeterminateTint="@color/snaptube_yellow" />
 
             <TextView
-                android:id="@+id/tv_loading_status"
+                android:id="@+id/tv_extracting_status"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
                 android:layout_weight="1"
-                android:text="@string/analyzing_url"
+                android:text="Analyzing link with yt-dlp..."
                 android:textColor="@color/text_primary"
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- Section Title: Quick Platform Access -->
+        <!-- Subtle Supported Sites Hint -->
         <TextView
+            android:id="@+id/tv_supported_hint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="@string/section_quick_access"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp" />
-
-        <!-- Platform Grid Row 1 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal">
-
-            <!-- YouTube Card -->
-            <LinearLayout
-                android:id="@+id/btn_site_youtube"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_dark"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <View
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
-                    android:background="@drawable/bg_circle_yellow"
-                    android:backgroundTint="@color/platform_youtube" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="YouTube"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <!-- Instagram Card -->
-            <LinearLayout
-                android:id="@+id/btn_site_instagram"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="3dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_dark"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <View
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
-                    android:background="@drawable/bg_circle_yellow"
-                    android:backgroundTint="@color/platform_instagram" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Instagram"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <!-- TikTok Card -->
-            <LinearLayout
-                android:id="@+id/btn_site_tiktok"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="3dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_dark"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <View
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
-                    android:background="@drawable/bg_circle_yellow"
-                    android:backgroundTint="@color/platform_tiktok" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="TikTok"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <!-- Facebook Card -->
-            <LinearLayout
-                android:id="@+id/btn_site_facebook"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_dark"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <View
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
-                    android:background="@drawable/bg_circle_yellow"
-                    android:backgroundTint="@color/platform_facebook" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Facebook"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Platform Grid Row 2 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
-
-            <!-- X / Twitter -->
-            <LinearLayout
-                android:id="@+id/btn_site_twitter"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_dark"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <View
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
-                    android:background="@drawable/bg_circle_yellow"
-                    android:backgroundTint="@color/platform_twitter" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="X / Twitter"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <!-- SoundCloud -->
-            <LinearLayout
-                android:id="@+id/btn_site_soundcloud"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="3dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_dark"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <View
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
-                    android:background="@drawable/bg_circle_yellow"
-                    android:backgroundTint="@color/platform_soundcloud" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="SoundCloud"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <!-- Vimeo -->
-            <LinearLayout
-                android:id="@+id/btn_site_vimeo"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="3dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_dark"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <View
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
-                    android:background="@drawable/bg_circle_yellow"
-                    android:backgroundTint="@color/platform_vimeo" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Vimeo"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <!-- Reddit -->
-            <LinearLayout
-                android:id="@+id/btn_site_reddit"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_dark"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <View
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
-                    android:background="@drawable/bg_circle_yellow"
-                    android:backgroundTint="@color/platform_reddit" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Reddit"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Pro Features Card -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="24dp"
-            android:background="@drawable/bg_card_dark"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Direct yt-dlp Power"
-                android:textColor="@color/snaptube_yellow"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:lineSpacingExtra="3dp"
-                android:text="• Downloads run 100% on your device directly.\n• Supports 1000+ video and audio websites.\n• High resolution 1080p, 2K, 4K and pure MP3 extraction.\n• All files saved directly to your Downloads folder."
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
-        </LinearLayout>
-
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:text="Supports Instagram Reels, YouTube, TikTok, Facebook, X &amp; 1000+ sites"
+            android:textColor="#555555"
+            android:textSize="12sp" />
     </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

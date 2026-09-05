@@ -10,7 +10,6 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.snaptube.dl.MainActivity
-import com.snaptube.dl.R
 import com.snaptube.dl.databinding.FragmentHomeBinding
 import com.snaptube.dl.engine.DownloadManager
 import com.snaptube.dl.ui.dialogs.FormatBottomSheetDialog
@@ -33,29 +32,53 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Clipboard Paste Button
-        binding.btnPaste.setOnClickListener {
+        // Circular Yellow Search Button
+        binding.btnSearchCircle.setOnClickListener {
+            handleSearchOrDownload()
+        }
+
+        binding.etSearchInput.setOnEditorActionListener { _, _, _ ->
+            handleSearchOrDownload()
+            true
+        }
+
+        // Quick Paste Button
+        binding.btnHomePaste.setOnClickListener {
             pasteFromClipboard()
         }
 
-        // Analyze & Download Button
-        binding.btnAnalyze.setOnClickListener {
-            val url = binding.etUrl.text?.toString()?.trim().orEmpty()
-            if (url.isEmpty()) {
-                Toast.makeText(requireContext(), "Please paste or enter a media URL", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            analyzeUrl(url)
+        // Top Category Tabs
+        binding.tabYoutube.setOnClickListener {
+            (activity as? MainActivity)?.navigateToBrowser("https://m.youtube.com")
         }
-
-        // Platform Shortcuts
-        setupPlatformShortcuts()
+        binding.tabMusic.setOnClickListener {
+            (activity as? MainActivity)?.navigateToBrowser("https://m.soundcloud.com")
+        }
+        binding.tabMore.setOnClickListener {
+            (activity as? MainActivity)?.navigateToBrowser("https://www.instagram.com")
+        }
     }
 
-    fun setUrlAndAnalyze(url: String) {
+    fun analyzeDirectUrl(url: String) {
         _binding?.let {
-            it.etUrl.setText(url)
-            analyzeUrl(url)
+            it.etSearchInput.setText(url)
+        }
+        analyzeUrl(url)
+    }
+
+    private fun handleSearchOrDownload() {
+        val input = binding.etSearchInput.text?.toString()?.trim().orEmpty()
+        if (input.isEmpty()) {
+            Toast.makeText(requireContext(), "Please paste a link or enter a query", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (input.startsWith("http://") || input.startsWith("https://")) {
+            analyzeUrl(input)
+        } else {
+            // Search on YouTube in browser tab
+            val searchUrl = "https://m.youtube.com/results?search_query=${android.net.Uri.encode(input)}"
+            (activity as? MainActivity)?.navigateToBrowser(searchUrl)
         }
     }
 
@@ -65,8 +88,10 @@ class HomeFragment : Fragment() {
         if (clip != null && clip.itemCount > 0) {
             val text = clip.getItemAt(0).text?.toString()?.trim().orEmpty()
             if (text.isNotEmpty()) {
-                binding.etUrl.setText(text)
-                Toast.makeText(requireContext(), "Pasted from clipboard", Toast.LENGTH_SHORT).show()
+                binding.etSearchInput.setText(text)
+                if (text.startsWith("http://") || text.startsWith("https://")) {
+                    analyzeUrl(text)
+                }
             } else {
                 Toast.makeText(requireContext(), "Clipboard is empty", Toast.LENGTH_SHORT).show()
             }
@@ -76,57 +101,26 @@ class HomeFragment : Fragment() {
     }
 
     private fun analyzeUrl(url: String) {
-        binding.layoutLoading.visibility = View.VISIBLE
-        binding.tvLoadingStatus.text = getString(R.string.analyzing_url)
-        binding.btnAnalyze.isEnabled = false
+        binding.layoutExtracting.visibility = View.VISIBLE
+        binding.btnSearchCircle.isEnabled = false
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result = DownloadManager.extractMetadata(url)
-            binding.layoutLoading.visibility = View.GONE
-            binding.btnAnalyze.isEnabled = true
+            binding.layoutExtracting.visibility = View.GONE
+            binding.btnSearchCircle.isEnabled = true
 
             result.onSuccess { metadata ->
                 val dialog = FormatBottomSheetDialog(metadata) {
-                    // Navigate to downloads tab upon start
                     (activity as? MainActivity)?.navigateToDownloads()
                 }
                 dialog.show(parentFragmentManager, FormatBottomSheetDialog.TAG)
             }.onFailure { error ->
                 Toast.makeText(
                     requireContext(),
-                    "Extraction failed: ${error.localizedMessage ?: "Unknown error"}",
+                    "Could not extract video: ${error.localizedMessage ?: "Unknown error"}",
                     Toast.LENGTH_LONG
                 ).show()
             }
-        }
-    }
-
-    private fun setupPlatformShortcuts() {
-        val mainActivity = activity as? MainActivity
-
-        binding.btnSiteYoutube.setOnClickListener {
-            mainActivity?.navigateToBrowser("https://m.youtube.com")
-        }
-        binding.btnSiteInstagram.setOnClickListener {
-            mainActivity?.navigateToBrowser("https://www.instagram.com")
-        }
-        binding.btnSiteTiktok.setOnClickListener {
-            mainActivity?.navigateToBrowser("https://www.tiktok.com")
-        }
-        binding.btnSiteFacebook.setOnClickListener {
-            mainActivity?.navigateToBrowser("https://m.facebook.com")
-        }
-        binding.btnSiteTwitter.setOnClickListener {
-            mainActivity?.navigateToBrowser("https://x.com")
-        }
-        binding.btnSiteSoundcloud.setOnClickListener {
-            mainActivity?.navigateToBrowser("https://m.soundcloud.com")
-        }
-        binding.btnSiteVimeo.setOnClickListener {
-            mainActivity?.navigateToBrowser("https://vimeo.com")
-        }
-        binding.btnSiteReddit.setOnClickListener {
-            mainActivity?.navigateToBrowser("https://www.reddit.com")
         }
     }
 

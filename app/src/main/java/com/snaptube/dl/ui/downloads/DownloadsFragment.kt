@@ -1,5 +1,8 @@
 package com.snaptube.dl.ui.downloads
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -7,11 +10,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.tabs.TabLayout
+import com.bumptech.glide.Glide
 import com.snaptube.dl.R
 import com.snaptube.dl.data.DownloadItem
 import com.snaptube.dl.data.DownloadStatus
@@ -27,7 +32,6 @@ class DownloadsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var adapter: DownloadsAdapter
-    private var isCompletedTab: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,54 +45,85 @@ class DownloadsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = DownloadsAdapter { item ->
-            openMediaFile(item)
+        adapter = DownloadsAdapter(
+            onPlayClicked = { item -> openMediaFile(item) },
+            onShareClicked = { item -> shareMediaFile(item) },
+            onDeleteClicked = { item -> confirmDelete(item) }
+        )
+
+        binding.rvDownloadedItems.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvDownloadedItems.adapter = adapter
+
+        // Clear all downloaded items
+        binding.btnClearDownloaded.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Clear Completed")
+                .setMessage("Remove all finished items from the list?")
+                .setPositiveButton("Clear") { _, _ ->
+                    DownloadManager.clearAllCompleted()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
 
-        binding.rvDownloads.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvDownloads.adapter = adapter
-
-        binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab?) {
-                isCompletedTab = (tab?.position == 1)
-                updateList(DownloadManager.downloads.value)
-            }
-
-            override fun onTabUnselected(tab: TabLayout.Tab?) {}
-            override fun onTabReselected(tab: TabLayout.Tab?) {}
-        })
+        // Filter action (Toggle video vs music)
+        binding.btnFilterDownloaded.setOnClickListener {
+            Toast.makeText(requireContext(), "Showing all media files", Toast.LENGTH_SHORT).show()
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            DownloadManager.downloads.collectLatest { list ->
-                updateList(list)
+            DownloadManager.downloads.collectLatest { allDownloads ->
+                updateUi(allDownloads)
             }
         }
     }
 
-    private fun updateList(allDownloads: List<DownloadItem>) {
-        val filtered = if (isCompletedTab) {
-            allDownloads.filter { it.status == DownloadStatus.COMPLETED }
-        } else {
-            allDownloads.filter { it.status == DownloadStatus.DOWNLOADING || it.status == DownloadStatus.QUEUED }
+    private fun updateUi(allDownloads: List<DownloadItem>) {
+        val activeOrFailed = allDownloads.filter {
+            it.status == DownloadStatus.DOWNLOADING || it.status == DownloadStatus.QUEUED || it.status == DownloadStatus.FAILED
         }
+        val completed = allDownloads.filter { it.status == DownloadStatus.COMPLETED }
 
-        adapter.submitList(filtered)
-        if (filtered.isEmpty()) {
-            binding.layoutEmpty.visibility = View.VISIBLE
-            binding.tvEmptyMessage.text = if (isCompletedTab) {
-                getString(R.string.no_finished)
+        // Section 1: Downloading (N)
+        binding.tvDownloadingHeader.text = "Downloading (${activeOrFailed.size})"
+        if (activeOrFailed.isNotEmpty()) {
+            binding.layoutDownloadingSection.visibility = View.VISIBLE
+            val latest = activeOrFailed.first()
+
+            binding.tvActiveTitle.text = latest.title
+            Glide.with(this)
+                .load(latest.thumbnailUrl)
+                .placeholder(R.drawable.bg_card_dark)
+                .into(binding.ivActiveThumb)
+
+            if (latest.status == DownloadStatus.FAILED) {
+                binding.tvActiveStatus.text = "Failed"
+                binding.tvActiveStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_error))
+                binding.tvActivePercent.text = "0.0%"
             } else {
-                getString(R.string.no_downloads)
+                binding.tvActiveStatus.text = "Downloading... ${latest.speedString}"
+                binding.tvActiveStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.snaptube_yellow))
+                binding.tvActivePercent.text = "${latest.progress}%"
+            }
+
+            binding.cardActiveDownload.setOnClickListener {
+                if (latest.status == DownloadStatus.FAILED) {
+                    Toast.makeText(requireContext(), "Error: ${latest.errorMessage}", Toast.LENGTH_LONG).show()
+                }
             }
         } else {
-            binding.layoutEmpty.visibility = View.GONE
+            binding.layoutDownloadingSection.visibility = View.GONE
         }
+
+        // Section 2: Downloaded
+        adapter.submitList(completed)
+        binding.layoutEmptyDownloaded.visibility = if (completed.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun openMediaFile(item: DownloadItem) {
         val file = File(item.localFilePath)
         if (!file.exists()) {
-            Toast.makeText(requireContext(), "File not found on storage", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "File not found on device", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -111,8 +146,44 @@ class DownloadsFragment : Fragment() {
             }
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Unable to open file: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Cannot play file: ${e.message}", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun shareMediaFile(item: DownloadItem) {
+        val file = File(item.localFilePath)
+        if (!file.exists()) {
+            Toast.makeText(requireContext(), "File does not exist to share", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        try {
+            val uri = FileProvider.getUriForFile(
+                requireContext(),
+                "${requireContext().packageName}.fileprovider",
+                file
+            )
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = if (item.ext.equals("mp3", ignoreCase = true)) "audio/*" else "video/*"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(intent, "Share via"))
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Share failed: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun confirmDelete(item: DownloadItem) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Delete")
+            .setMessage("Delete \"${item.title}\"?")
+            .setPositiveButton("Delete") { _, _ ->
+                DownloadManager.deleteItem(item, true)
+                Toast.makeText(requireContext(), "Deleted", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     override fun onDestroyView() {

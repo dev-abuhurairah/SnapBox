@@ -1,0 +1,64 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="360dp"
+    android:height="280dp"
+    android:viewportWidth="360"
+    android:viewportHeight="280">
+
+    <!-- Solid Base Dark Background -->
+    <path
+        android:fillColor="#121212"
+        android:pathData="M0,0h360v280h-360z"/>
+
+    <!-- Tilted Social App Badges (Mosaic Pattern) -->
+    <!-- Facebook Tile -->
+    <path
+        android:fillColor="#1F1877F2"
+        android:pathData="M30,30 L90,15 L105,75 L45,90 Z"/>
+    <path
+        android:fillColor="#331877F2"
+        android:pathData="M70,45 L80,42 L84,58 L74,60 Z"/>
+
+    <!-- WhatsApp Tile -->
+    <path
+        android:fillColor="#1F25D366"
+        android:pathData="M160,25 L220,10 L235,70 L175,85 Z"/>
+    <path
+        android:fillColor="#3325D366"
+        android:pathData="M200,40 L210,38 L214,53 L204,56 Z"/>
+
+    <!-- Instagram Tile -->
+    <path
+        android:fillColor="#1FE1306C"
+        android:pathData="M70,105 L130,90 L145,150 L85,165 Z"/>
+    <path
+        android:fillColor="#33E1306C"
+        android:pathData="M110,120 L120,118 L124,133 L114,136 Z"/>
+
+    <!-- TikTok Tile -->
+    <path
+        android:fillColor="#1F00F2FE"
+        android:pathData="M200,100 L260,85 L275,145 L215,160 Z"/>
+    <path
+        android:fillColor="#3300F2FE"
+        android:pathData="M240,115 L250,112 L254,128 L244,130 Z"/>
+
+    <!-- YouTube Tile -->
+    <path
+        android:fillColor="#1FFF0000"
+        android:pathData="M290,20 L350,5 L365,65 L305,80 Z"/>
+
+    <!-- Deep Vignette Gradient overlay to fade smoothly into #121212 -->
+    <path
+        android:pathData="M0,0h360v280h-360z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startY="0"
+                android:endY="280"
+                android:startColor="#66121212"
+                android:centerColor="#D9121212"
+                android:endColor="#FF121212"
+                android:type="linear"/>
+        </aapt:attr>
+    </path>
+</vector>

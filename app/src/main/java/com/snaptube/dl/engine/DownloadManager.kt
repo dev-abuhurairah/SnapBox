@@ -31,7 +31,7 @@ object DownloadManager {
     private val _downloads = MutableStateFlow<List<DownloadItem>>(emptyList())
     val downloads: StateFlow<List<DownloadItem>> = _downloads.asStateFlow()
 
-    private fun getDownloadDir(context: Context): File {
+    fun getDownloadDir(context: Context): File {
         val dir = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
             "SnapDownloader"
@@ -46,36 +46,39 @@ object DownloadManager {
         try {
             val request = YoutubeDLRequest(url).apply {
                 addOption("--no-playlist")
-                addOption("--socket-timeout", "15")
+                addOption("--no-check-certificates")
+                addOption("--socket-timeout", "20")
+                addOption("--user-agent", "Mozilla/5.0 (Linux; Android 13; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+                addOption("--add-header", "Accept-Language:en-US,en;q=0.9")
             }
             val info: VideoInfo = YoutubeDL.getInstance().getInfo(request)
-            val title = info.title ?: "Downloaded Media"
-            val uploader = info.uploader ?: "Web Video"
+            val title = (info.title ?: "Social Media Video").trim()
+            val uploader = (info.uploader ?: "Creator").trim()
             val durationSec = info.duration
             val durationFormatted = formatDuration(durationSec)
             val thumbnail = info.thumbnail ?: ""
 
-            // Build Snaptube-style curated format options
+            // Build format options tailored for compatibility
             val audioOptions = listOf(
                 FormatOption(
                     formatId = "bestaudio/mp3-320",
                     label = "MP3 High Quality (320k)",
                     ext = "mp3",
-                    fileSizeEstimate = "~8 - 12 MB",
+                    fileSizeEstimate = "~5 - 10 MB",
                     isAudioOnly = true
                 ),
                 FormatOption(
                     formatId = "bestaudio/mp3-128",
                     label = "MP3 Standard (128k)",
                     ext = "mp3",
-                    fileSizeEstimate = "~3 - 5 MB",
+                    fileSizeEstimate = "~3 - 6 MB",
                     isAudioOnly = true
                 ),
                 FormatOption(
                     formatId = "bestaudio/m4a",
                     label = "M4A Audio",
                     ext = "m4a",
-                    fileSizeEstimate = "~4 - 6 MB",
+                    fileSizeEstimate = "~3 - 5 MB",
                     isAudioOnly = true
                 )
             )
@@ -85,7 +88,7 @@ object DownloadManager {
                     formatId = "1080",
                     label = "1080p FHD",
                     ext = "mp4",
-                    fileSizeEstimate = "~45 - 90 MB",
+                    fileSizeEstimate = "~30 - 80 MB",
                     isAudioOnly = false,
                     height = 1080
                 ),
@@ -93,7 +96,7 @@ object DownloadManager {
                     formatId = "720",
                     label = "720p HD",
                     ext = "mp4",
-                    fileSizeEstimate = "~25 - 45 MB",
+                    fileSizeEstimate = "~15 - 40 MB",
                     isAudioOnly = false,
                     height = 720
                 ),
@@ -101,7 +104,7 @@ object DownloadManager {
                     formatId = "480",
                     label = "480p SD",
                     ext = "mp4",
-                    fileSizeEstimate = "~15 - 25 MB",
+                    fileSizeEstimate = "~8 - 20 MB",
                     isAudioOnly = false,
                     height = 480
                 ),
@@ -109,7 +112,7 @@ object DownloadManager {
                     formatId = "360",
                     label = "360p Low",
                     ext = "mp4",
-                    fileSizeEstimate = "~8 - 15 MB",
+                    fileSizeEstimate = "~5 - 12 MB",
                     isAudioOnly = false,
                     height = 360
                 )
@@ -149,6 +152,8 @@ object DownloadManager {
             thumbnailUrl = metadata.thumbnailUrl,
             status = DownloadStatus.DOWNLOADING,
             progress = 0,
+            duration = metadata.duration,
+            fileSizeString = "",
             localFilePath = targetFile.absolutePath
         )
 
@@ -157,15 +162,25 @@ object DownloadManager {
         val job = scope.launch {
             try {
                 val request = YoutubeDLRequest(metadata.webpageUrl).apply {
+                    addOption("--no-check-certificates")
+                    addOption("--prefer-free-formats")
+                    addOption("--socket-timeout", "30")
+                    addOption("--user-agent", "Mozilla/5.0 (Linux; Android 13; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+                    addOption("--add-header", "Accept-Language:en-US,en;q=0.9")
+
                     if (format.isAudioOnly) {
                         addOption("-x")
                         addOption("--audio-format", format.ext)
                         addOption("--audio-quality", "0")
+                        addOption("-f", "bestaudio/best")
                     } else {
-                        addOption("-f", "bestvideo[height<=${format.height}]+bestaudio/best[height<=${format.height}]/best")
+                        // Universal fallback: Works for Instagram Reels, TikTok single streams, and YouTube DASH
+                        addOption("-f", "bestvideo[height<=${format.height}]+bestaudio/best[height<=${format.height}]/bestvideo+bestaudio/best")
                         addOption("--merge-output-format", "mp4")
                     }
-                    addOption("-o", "${downloadDir.absolutePath}/%(title)s.%(ext)s")
+
+                    // Restrict filename length to avoid filesystem buffer overflow
+                    addOption("-o", "${downloadDir.absolutePath}/%(title).60s.%(ext)s")
                     addOption("--no-mtime")
                 }
 
@@ -182,6 +197,15 @@ object DownloadManager {
                 if (completedItem != null) {
                     completedItem.status = DownloadStatus.COMPLETED
                     completedItem.progress = 100
+
+                    // Discover the actual output file created on disk
+                    val foundFile = findDownloadedFile(downloadDir, cleanTitle, format.ext)
+                    if (foundFile != null && foundFile.exists()) {
+                        completedItem.localFilePath = foundFile.absolutePath
+                        completedItem.fileSizeString = formatBytes(foundFile.length())
+                    } else if (targetFile.exists()) {
+                        completedItem.fileSizeString = formatBytes(targetFile.length())
+                    }
                     notifyUpdated()
                 }
             } catch (e: Exception) {
@@ -189,7 +213,7 @@ object DownloadManager {
                 val failedItem = findItem(taskId)
                 if (failedItem != null) {
                     failedItem.status = DownloadStatus.FAILED
-                    failedItem.errorMessage = e.localizedMessage
+                    failedItem.errorMessage = e.localizedMessage ?: "Network or format error"
                     notifyUpdated()
                 }
             } finally {
@@ -204,7 +228,7 @@ object DownloadManager {
         try {
             YoutubeDL.getInstance().destroyProcessById(taskId)
         } catch (e: Exception) {
-            Log.w(TAG, "Could not kill process: ${e.message}")
+            Log.w(TAG, "Could not destroy process: ${e.message}")
         }
         activeJobs[taskId]?.cancel()
         activeJobs.remove(taskId)
@@ -213,6 +237,36 @@ object DownloadManager {
         if (item != null) {
             item.status = DownloadStatus.CANCELLED
             notifyUpdated()
+        }
+    }
+
+    fun deleteItem(item: DownloadItem, deleteFileFromDisk: Boolean = true) {
+        cancelDownload(item.id)
+        if (deleteFileFromDisk && item.localFilePath.isNotEmpty()) {
+            try {
+                val f = File(item.localFilePath)
+                if (f.exists()) f.delete()
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to delete file from disk: ${e.message}")
+            }
+        }
+        val current = _downloads.value.toMutableList()
+        current.removeAll { it.id == item.id }
+        _downloads.value = current
+    }
+
+    fun clearAllCompleted() {
+        val current = _downloads.value.toMutableList()
+        current.removeAll { it.status == DownloadStatus.COMPLETED }
+        _downloads.value = current
+    }
+
+    suspend fun updateEngine(context: Context): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val status = YoutubeDL.getInstance().updateYoutubeDL(context)
+            Result.success("yt-dlp updated: ${status?.name ?: "Success"}")
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
@@ -231,6 +285,19 @@ object DownloadManager {
         _downloads.value = _downloads.value.toList()
     }
 
+    private fun findDownloadedFile(dir: File, prefix: String, ext: String): File? {
+        val files = dir.listFiles() ?: return null
+        return files.firstOrNull { it.name.startsWith(prefix) || it.extension.equals(ext, ignoreCase = true) }
+    }
+
+    private fun formatBytes(bytes: Long): String {
+        if (bytes <= 0) return "0 B"
+        val units = arrayOf("B", "KB", "MB", "GB", "TB")
+        val digitGroups = (Math.log10(bytes.toDouble()) / Math.log10(1024.0)).toInt()
+        val formatted = bytes / Math.pow(1024.0, digitGroups.toDouble())
+        return String.format("%.1f %s", formatted, units[digitGroups.coerceIn(0, units.size - 1)])
+    }
+
     private fun formatDuration(seconds: Int?): String {
         if (seconds == null || seconds <= 0) return "00:00"
         val m = (seconds % 3600) / 60
@@ -240,7 +307,7 @@ object DownloadManager {
     }
 
     private fun sanitizeFilename(name: String): String {
-        return name.replace("[\\\\/*?:\"<>|]".toRegex(), "").trim().take(80)
+        return name.replace("[\\\\/*?:\"<>|#]".toRegex(), "").trim().take(50)
     }
 
     private fun parseSpeed(line: String?): String {

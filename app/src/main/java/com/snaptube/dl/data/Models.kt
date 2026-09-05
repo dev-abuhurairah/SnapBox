@@ -40,6 +40,8 @@ data class DownloadItem(
     var etaSeconds: Long = 0,
     var speedString: String = "",
     var localFilePath: String = "",
+    var duration: String = "00:00",
+    var fileSizeString: String = "",
     var errorMessage: String? = null
 )
 

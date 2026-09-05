@@ -3,7 +3,19 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Golden Rounded Square Container -->
+    <path
+        android:fillColor="#FFC800"
+        android:pathData="M35,26 C30,26 26,30 26,35 L26,73 C26,78 30,82 35,82 L73,82 C78,82 82,78 82,73 L82,35 C82,30 78,26 73,26 Z"/>
+    <!-- Bold Inner Dark Download Arrow & Tray -->
     <path
         android:fillColor="#121212"
-        android:pathData="M54,28 L36,54 L48,54 L48,74 L60,74 L60,54 L72,54 Z M30,80 L78,80 L78,86 L30,86 Z"/>
+        android:pathData="M54,34 L40,49 L48,49 L48,61 L60,61 L60,49 L68,49 Z"/>
+    <path
+        android:fillColor="#121212"
+        android:pathData="M38,66 C38,65.4 38.4,65 39,65 L69,65 C69.6,65 70,65.4 70,66 L70,70 C70,71.1 69.1,72 68,72 L40,72 C38.9,72 38,71.1 38,70 Z"/>
+    <!-- Micro Play Accent in Tray -->
+    <path
+        android:fillColor="#FFC800"
+        android:pathData="M51,66.5 L57,68.5 L51,70.5 Z"/>
 </vector>
