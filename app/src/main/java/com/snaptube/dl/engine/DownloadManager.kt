@@ -1,4 +1,4 @@
-﻿package com.snaptube.dl.engine
+package com.snaptube.dl.engine
 
 import android.content.Context
 import android.os.Environment

@@ -1,4 +1,4 @@
-﻿package com.snaptube.dl.ui.home
+package com.snaptube.dl.ui.home
 
 import android.content.ClipboardManager
 import android.content.Context

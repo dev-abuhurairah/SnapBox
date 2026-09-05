@@ -1,4 +1,4 @@
-﻿package com.snaptube.dl.ui.browser
+package com.snaptube.dl.ui.browser
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap

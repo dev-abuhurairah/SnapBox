@@ -1,4 +1,4 @@
-﻿package com.snaptube.dl
+package com.snaptube.dl
 
 import android.Manifest
 import android.content.Intent

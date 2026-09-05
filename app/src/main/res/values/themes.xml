@@ -1,4 +1,4 @@
-﻿<resources xmlns:tools="http://schemas.android.com/tools">
+<resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.SnapDownloader" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">@color/snaptube_yellow</item>
         <item name="colorPrimaryVariant">@color/snaptube_yellow_variant</item>

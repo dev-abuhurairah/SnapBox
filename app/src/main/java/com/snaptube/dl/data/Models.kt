@@ -1,4 +1,4 @@
-﻿package com.snaptube.dl.data
+package com.snaptube.dl.data
 
 enum class DownloadStatus {
     QUEUED,

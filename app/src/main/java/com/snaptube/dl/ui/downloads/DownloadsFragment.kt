@@ -1,4 +1,4 @@
-﻿package com.snaptube.dl.ui.downloads
+package com.snaptube.dl.ui.downloads
 
 import android.content.Intent
 import android.net.Uri

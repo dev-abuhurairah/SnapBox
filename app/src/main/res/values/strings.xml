@@ -1,5 +1,5 @@
-﻿<resources>
-    <string name="app_name">SnapDownloader</string>
+<resources>
+    <string name="app_name">SnapBox</string>
     <string name="nav_home">Home</string>
     <string name="nav_browser">Browser</string>
     <string name="nav_downloads">My Files</string>

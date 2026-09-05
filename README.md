@@ -1,4 +1,4 @@
-﻿# SnapDownloader - Snaptube-Styled Mobile Downloader (yt-dlp)
+# SnapDownloader - Snaptube-Styled Mobile Downloader (yt-dlp)
 
 A modern Android video and audio downloader mobile application crafted with the iconic **Snaptube aesthetic** (rich amber yellow and sleek dark surfaces), powered directly by **yt-dlp** via embedded `youtubedl-android` (Python + FFmpeg) on the device.
 

@@ -1,4 +1,4 @@
-﻿package com.snaptube.dl
+package com.snaptube.dl
 
 import android.app.Application
 import android.util.Log
