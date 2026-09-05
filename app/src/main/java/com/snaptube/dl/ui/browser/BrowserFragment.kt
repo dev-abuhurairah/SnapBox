@@ -209,14 +209,6 @@ class BrowserFragment : Fragment() {
     fun canGoBack(): Boolean = _binding?.webView?.canGoBack() == true
     fun goBack() { _binding?.webView?.goBack() }
 
-    fun loadUrl(url: String) {
-        _binding?.let {
-            it.webView.loadUrl(url)
-        } ?: run {
-            initialUrl = url
-        }
-    }
-
     private fun showDownloadSheetForStream(streamUrl: String, title: String, pageUrl: String) {
         val clean = cleanTitle(title)
         val metadata = VideoMetadata(
