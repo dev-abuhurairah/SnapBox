@@ -14,7 +14,8 @@ data class FormatOption(
     val ext: String,
     val fileSizeEstimate: String,
     val downloadUrl: String,
-    val isAudioOnly: Boolean
+    val isAudioOnly: Boolean,
+    val height: Int? = null
 )
 
 data class VideoMetadata(
@@ -39,6 +40,8 @@ data class DownloadItem(
     val thumbnailUrl: String,
     var status: DownloadStatus = DownloadStatus.QUEUED,
     var progress: Int = 0,
+    var speedString: String = "",
+    var etaSeconds: Long? = null,
     var duration: String = "00:00",
     var fileSizeString: String = "",
     var localFilePath: String = "",
