@@ -86,27 +86,17 @@ object DownloadManager {
         val cleanUrl = url.trim()
         val lower = cleanUrl.lowercase()
 
-        // 1. Try Platform-specific direct resolvers
+        // 1. Try Platform-specific direct resolvers (TikTok, Instagram)
         try {
-            if (lower.contains("instagram.com")) {
-                val instaRes = resolveInstagram(cleanUrl)
-                if (instaRes != null) return@withContext Result.success(instaRes)
-            } else if (lower.contains("tiktok.com")) {
+            if (lower.contains("tiktok.com")) {
                 val tiktokRes = resolveTikTok(cleanUrl)
                 if (tiktokRes != null) return@withContext Result.success(tiktokRes)
+            } else if (lower.contains("instagram.com")) {
+                val instaRes = resolveInstagram(cleanUrl)
+                if (instaRes != null) return@withContext Result.success(instaRes)
             }
         } catch (e: Exception) {
             Log.w(TAG, "Platform direct resolver attempt: ${e.message}")
-        }
-
-        // 2. Try High-Speed Universal Stream Resolver
-        try {
-            val universalRes = resolveUniversalApi(cleanUrl)
-            if (universalRes != null) {
-                return@withContext Result.success(universalRes)
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Universal API resolver attempt: ${e.message}")
         }
 
         // 3. Fallback: Direct HTML OpenGraph & Video tag scraper
@@ -184,103 +174,62 @@ object DownloadManager {
     }
 
     private fun resolveTikTok(url: String): VideoMetadata? {
-        val oembedUrl = "https://www.tiktok.com/oembed?url=${Uri.encode(url)}"
-        val request = Request.Builder().url(oembedUrl).build()
-        val response = httpClient.newCall(request).execute()
-        val jsonStr = response.body?.string() ?: return null
-        val json = JSONObject(jsonStr)
+        try {
+            val apiUrl = "https://www.tikwm.com/api/?url=${Uri.encode(url)}"
+            val request = Request.Builder()
+                .url(apiUrl)
+                .header("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36")
+                .build()
+            val response = httpClient.newCall(request).execute()
+            if (!response.isSuccessful) return null
+            val body = response.body?.string() ?: return null
+            val json = JSONObject(body)
+            val data = json.optJSONObject("data") ?: return null
 
-        val title = json.optString("title", "TikTok Video")
-        val author = json.optString("author_name", "TikTok")
-        val thumb = json.optString("thumbnail_url", "")
+            val title = data.optString("title", "TikTok Video").ifEmpty { "TikTok Video" }
+            val author = data.optJSONObject("author")?.optString("nickname", "TikTok") ?: "TikTok"
+            val thumb = data.optString("cover", "")
+            val playUrl = data.optString("play", "")
+            val musicUrl = data.optString("music", playUrl)
 
-        // Also resolve direct video stream via public TikTok JSON API
-        val formats = listOf(
-            FormatOption(
-                formatId = "tiktok-hd",
-                label = "HD Video (No Watermark)",
-                ext = "mp4",
-                fileSizeEstimate = "~4 - 12 MB",
-                downloadUrl = url,
-                isAudioOnly = false
+            if (playUrl.isEmpty()) return null
+
+            val formats = listOf(
+                FormatOption(
+                    formatId = "tiktok-hd",
+                    label = "HD Video (No Watermark)",
+                    ext = "mp4",
+                    fileSizeEstimate = "~5 - 18 MB",
+                    downloadUrl = playUrl,
+                    isAudioOnly = false,
+                    height = 1080
+                )
             )
-        )
-        val audioFormats = listOf(
-            FormatOption(
-                formatId = "tiktok-audio",
-                label = "Audio Only",
-                ext = "m4a",
-                fileSizeEstimate = "~1 - 3 MB",
-                downloadUrl = url,
-                isAudioOnly = true
+            val audioFormats = listOf(
+                FormatOption(
+                    formatId = "tiktok-audio",
+                    label = "Audio (MP3)",
+                    ext = "mp3",
+                    fileSizeEstimate = "~2 - 5 MB",
+                    downloadUrl = if (musicUrl.isNotEmpty()) musicUrl else playUrl,
+                    isAudioOnly = true
+                )
             )
-        )
 
-        return VideoMetadata(
-            id = UUID.randomUUID().toString(),
-            title = title,
-            uploader = author,
-            duration = "00:15",
-            thumbnailUrl = thumb,
-            webpageUrl = url,
-            audioFormats = audioFormats,
-            videoFormats = formats
-        )
-    }
-
-    private fun resolveUniversalApi(url: String): VideoMetadata? {
-        val jsonBody = JSONObject().apply {
-            put("url", url)
-            put("videoQuality", "720")
+            return VideoMetadata(
+                id = UUID.randomUUID().toString(),
+                title = title,
+                uploader = author,
+                duration = "00:30",
+                thumbnailUrl = thumb,
+                webpageUrl = url,
+                audioFormats = audioFormats,
+                videoFormats = formats
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "TikTok resolver error: ${e.message}")
+            return null
         }
-
-        val request = Request.Builder()
-            .url("https://api.cobalt.tools/")
-            .header("Accept", "application/json")
-            .header("Content-Type", "application/json")
-            .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
-            .build()
-
-        val response = httpClient.newCall(request).execute()
-        if (!response.isSuccessful) return null
-        val resStr = response.body?.string() ?: return null
-        val resJson = JSONObject(resStr)
-
-        val status = resJson.optString("status")
-        val streamUrl = resJson.optString("url", "")
-        if (streamUrl.isEmpty()) return null
-
-        val formats = listOf(
-            FormatOption(
-                formatId = "video-720",
-                label = "720p HD",
-                ext = "mp4",
-                fileSizeEstimate = "~15 - 35 MB",
-                downloadUrl = streamUrl,
-                isAudioOnly = false
-            )
-        )
-        val audioFormats = listOf(
-            FormatOption(
-                formatId = "audio-mp3",
-                label = "Audio (MP3)",
-                ext = "mp3",
-                fileSizeEstimate = "~4 - 8 MB",
-                downloadUrl = streamUrl,
-                isAudioOnly = true
-            )
-        )
-
-        return VideoMetadata(
-            id = UUID.randomUUID().toString(),
-            title = resJson.optString("filename", "Downloaded Video"),
-            uploader = "Media Stream",
-            duration = "01:00",
-            thumbnailUrl = "",
-            webpageUrl = url,
-            audioFormats = audioFormats,
-            videoFormats = formats
-        )
     }
 
     private fun scrapeWebMedia(url: String): VideoMetadata? {
@@ -335,8 +284,9 @@ object DownloadManager {
         val fileName = "$cleanTitle.${format.ext}"
         val targetFile = File(downloadDir, fileName)
 
+        val cleanStreamUrl = format.downloadUrl.replace(Regex("&range=\\d+-\\d+"), "")
         val androidDm = context.getSystemService(Context.DOWNLOAD_SERVICE) as AndroidDownloadManager
-        val request = AndroidDownloadManager.Request(Uri.parse(format.downloadUrl)).apply {
+        val request = AndroidDownloadManager.Request(Uri.parse(cleanStreamUrl)).apply {
             setTitle(metadata.title)
             setDescription("Downloading with SnapBox")
             setNotificationVisibility(AndroidDownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
@@ -344,6 +294,15 @@ object DownloadManager {
             setAllowedOverMetered(true)
             setAllowedOverRoaming(true)
             addRequestHeader("User-Agent", "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36")
+            try {
+                val cookie = android.webkit.CookieManager.getInstance().getCookie(cleanStreamUrl)
+                    ?: android.webkit.CookieManager.getInstance().getCookie(metadata.webpageUrl)
+                if (!cookie.isNullOrEmpty()) {
+                    addRequestHeader("Cookie", cookie)
+                }
+            } catch (e: Exception) {
+                // Ignore
+            }
         }
 
         val downloadId = try {
@@ -357,7 +316,7 @@ object DownloadManager {
             id = taskId,
             downloadManagerId = downloadId,
             url = metadata.webpageUrl,
-            downloadUrl = format.downloadUrl,
+            downloadUrl = cleanStreamUrl,
             title = metadata.title,
             formatLabel = format.label,
             ext = format.ext,

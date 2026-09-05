@@ -114,12 +114,13 @@ class HomeFragment : Fragment() {
                     (activity as? MainActivity)?.navigateToDownloads()
                 }
                 dialog.show(parentFragmentManager, FormatBottomSheetDialog.TAG)
-            }.onFailure { error ->
+            }.onFailure { _ ->
                 Toast.makeText(
                     requireContext(),
-                    "Could not extract video: ${error.localizedMessage ?: "Unknown error"}",
-                    Toast.LENGTH_LONG
+                    "Detecting video stream in browser...",
+                    Toast.LENGTH_SHORT
                 ).show()
+                (activity as? MainActivity)?.navigateToBrowser(url)
             }
         }
     }

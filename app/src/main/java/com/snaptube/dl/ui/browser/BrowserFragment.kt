@@ -33,16 +33,27 @@ class BrowserFragment : Fragment() {
     private var initialUrl: String = "https://m.youtube.com"
     private var sniffedStreamUrl: String? = null
     private var sniffedTitle: String = "Video on Page"
+    private var lastAutoPromptUrl: String? = null
 
     private val sniffer = WebMediaSniffer { url, title ->
         activity?.runOnUiThread {
+            if (_binding == null || !isAdded) return@runOnUiThread
             sniffedStreamUrl = url
-            if (title.isNotBlank()) sniffedTitle = title
-            // Light up floating Snaptube yellow download button
+            val currentWebTitle = binding.webView.title.orEmpty()
+            val clean = cleanTitle(if (title.isNotBlank() && title != "Web Video") title else currentWebTitle)
+            if (clean.isNotBlank()) sniffedTitle = clean
+
+            // Pulse floating Snaptube yellow download button
             binding.fabDownloadPage.setColorFilter(ContextCompat.getColor(requireContext(), R.color.text_on_yellow))
-            binding.fabDownloadPage.animate().scaleX(1.15f).scaleY(1.15f).setDuration(200).withEndAction {
-                binding.fabDownloadPage.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
+            binding.fabDownloadPage.animate().scaleX(1.25f).scaleY(1.25f).setDuration(220).withEndAction {
+                _binding?.fabDownloadPage?.animate()?.scaleX(1.0f)?.scaleY(1.0f)?.setDuration(220)?.start()
             }.start()
+
+            // Automatically open download bottom sheet once per detected stream
+            if (lastAutoPromptUrl != url && parentFragmentManager.findFragmentByTag(FormatBottomSheetDialog.TAG) == null) {
+                lastAutoPromptUrl = url
+                showDownloadSheetForStream(url, sniffedTitle, binding.webView.url.orEmpty())
+            }
         }
     }
 
@@ -166,6 +177,7 @@ class BrowserFragment : Fragment() {
                     it.etBrowserUrl.setText(url ?: "")
                 }
                 sniffedStreamUrl = null
+                lastAutoPromptUrl = null
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
@@ -186,11 +198,30 @@ class BrowserFragment : Fragment() {
         }
     }
 
+    private fun cleanTitle(raw: String): String {
+        return raw.replace(" - YouTube", "")
+            .replace(" | Instagram", "")
+            .replace(" on TikTok", "")
+            .replace(" | Facebook", "")
+            .trim().ifEmpty { "Web Video" }
+    }
+
+    fun canGoBack(): Boolean = _binding?.webView?.canGoBack() == true
+    fun goBack() { _binding?.webView?.goBack() }
+
+    fun loadUrl(url: String) {
+        _binding?.let {
+            it.webView.loadUrl(url)
+        } ?: run {
+            initialUrl = url
+        }
+    }
+
     private fun showDownloadSheetForStream(streamUrl: String, title: String, pageUrl: String) {
-        val isAudio = streamUrl.contains(".mp3") || streamUrl.contains(".m4a")
+        val clean = cleanTitle(title)
         val metadata = VideoMetadata(
             id = UUID.randomUUID().toString(),
-            title = title,
+            title = clean,
             uploader = "Media Stream",
             duration = "01:00",
             thumbnailUrl = "",
@@ -199,7 +230,7 @@ class BrowserFragment : Fragment() {
                 FormatOption("audio-1", "Audio (MP3 / M4A)", "mp3", "~3 - 6 MB", streamUrl, true)
             ),
             videoFormats = listOf(
-                FormatOption("video-1", "Video (MP4 Direct)", "mp4", "~10 - 35 MB", streamUrl, false)
+                FormatOption("video-1", "Video (MP4 Direct)", "mp4", "~10 - 35 MB", streamUrl, false, 720)
             )
         )
 

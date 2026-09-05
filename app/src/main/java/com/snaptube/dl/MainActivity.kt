@@ -154,13 +154,24 @@ class MainActivity : AppCompatActivity() {
                     navigateToDownloads()
                 }
                 formatSheet.show(supportFragmentManager, FormatBottomSheetDialog.TAG)
-            }.onFailure { error ->
+            }.onFailure { _ ->
                 Toast.makeText(
                     this@MainActivity,
-                    "Failed to fetch video: ${error.localizedMessage ?: "Network or format error"}",
-                    Toast.LENGTH_LONG
+                    "Opening video in browser...",
+                    Toast.LENGTH_SHORT
                 ).show()
+                navigateToBrowser(url)
             }
+        }
+    }
+
+    override fun onBackPressed() {
+        if (activeFragment == browserFragment && browserFragment?.canGoBack() == true) {
+            browserFragment?.goBack()
+        } else if (activeFragment != homeFragment) {
+            navigateToHome()
+        } else {
+            super.onBackPressed()
         }
     }
 
