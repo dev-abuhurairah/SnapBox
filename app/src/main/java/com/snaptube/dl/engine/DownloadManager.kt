@@ -46,8 +46,10 @@ object DownloadManager {
         try {
             val request = YoutubeDLRequest(url).apply {
                 addOption("--no-playlist")
+                addOption("--no-warnings")
                 addOption("--no-check-certificates")
-                addOption("--socket-timeout", "20")
+                addOption("--ignore-errors")
+                addOption("--socket-timeout", "15")
                 addOption("--user-agent", "Mozilla/5.0 (Linux; Android 13; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
                 addOption("--add-header", "Accept-Language:en-US,en;q=0.9")
             }
@@ -58,7 +60,6 @@ object DownloadManager {
             val durationFormatted = formatDuration(durationSec)
             val thumbnail = info.thumbnail ?: ""
 
-            // Build format options tailored for compatibility
             val audioOptions = listOf(
                 FormatOption(
                     formatId = "bestaudio/mp3-320",
@@ -132,7 +133,8 @@ object DownloadManager {
             )
         } catch (e: Exception) {
             Log.e(TAG, "Extraction failed: ${e.message}", e)
-            Result.failure(e)
+            val cleanMsg = cleanErrorMessage(e.localizedMessage)
+            Result.failure(Exception(cleanMsg, e))
         }
     }
 
@@ -162,11 +164,20 @@ object DownloadManager {
         val job = scope.launch {
             try {
                 val request = YoutubeDLRequest(metadata.webpageUrl).apply {
+                    addOption("--no-warnings")
                     addOption("--no-check-certificates")
                     addOption("--prefer-free-formats")
                     addOption("--socket-timeout", "30")
                     addOption("--user-agent", "Mozilla/5.0 (Linux; Android 13; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
                     addOption("--add-header", "Accept-Language:en-US,en;q=0.9")
+
+                    // High speed multi-connection aria2c accelerator
+                    try {
+                        addOption("--downloader", "libaria2c.so")
+                        addOption("--downloader-args", "aria2c:-c -j 8 -s 8 -x 8 -k 1M")
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Aria2c option error: ${e.message}")
+                    }
 
                     if (format.isAudioOnly) {
                         addOption("-x")
@@ -174,12 +185,11 @@ object DownloadManager {
                         addOption("--audio-quality", "0")
                         addOption("-f", "bestaudio/best")
                     } else {
-                        // Universal fallback: Works for Instagram Reels, TikTok single streams, and YouTube DASH
+                        // Universal format fallback: Works for Instagram Reels, TikTok, and YouTube
                         addOption("-f", "bestvideo[height<=${format.height}]+bestaudio/best[height<=${format.height}]/bestvideo+bestaudio/best")
                         addOption("--merge-output-format", "mp4")
                     }
 
-                    // Restrict filename length to avoid filesystem buffer overflow
                     addOption("-o", "${downloadDir.absolutePath}/%(title).60s.%(ext)s")
                     addOption("--no-mtime")
                 }
@@ -198,7 +208,6 @@ object DownloadManager {
                     completedItem.status = DownloadStatus.COMPLETED
                     completedItem.progress = 100
 
-                    // Discover the actual output file created on disk
                     val foundFile = findDownloadedFile(downloadDir, cleanTitle, format.ext)
                     if (foundFile != null && foundFile.exists()) {
                         completedItem.localFilePath = foundFile.absolutePath
@@ -213,7 +222,7 @@ object DownloadManager {
                 val failedItem = findItem(taskId)
                 if (failedItem != null) {
                     failedItem.status = DownloadStatus.FAILED
-                    failedItem.errorMessage = e.localizedMessage ?: "Network or format error"
+                    failedItem.errorMessage = cleanErrorMessage(e.localizedMessage)
                     notifyUpdated()
                 }
             } finally {
@@ -263,8 +272,8 @@ object DownloadManager {
 
     suspend fun updateEngine(context: Context): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val status = YoutubeDL.getInstance().updateYoutubeDL(context)
-            Result.success("yt-dlp updated: ${status?.name ?: "Success"}")
+            val status = YoutubeDL.getInstance().updateYoutubeDL(context, YoutubeDL.UpdateChannel._STABLE)
+            Result.success("yt-dlp updated: ${status?.name ?: "Up to date"}")
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -315,5 +324,14 @@ object DownloadManager {
         val speedRegex = Regex("""(\d+\.?\d*\s*[KMG]i?B/s)""")
         val match = speedRegex.find(line)
         return match?.value ?: ""
+    }
+
+    private fun cleanErrorMessage(rawMsg: String?): String {
+        if (rawMsg == null) return "Unable to extract video. Please check URL or network."
+        // Remove yt-dlp version warnings from message
+        val lines = rawMsg.split("\n")
+        val filtered = lines.filterNot { it.contains("WARNING:", ignoreCase = true) }
+        val result = filtered.joinToString(" ").trim()
+        return if (result.isNotEmpty()) result else "Video cannot be reached. It may be private or restricted."
     }
 }
